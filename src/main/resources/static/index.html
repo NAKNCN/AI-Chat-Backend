@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 对话助手</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .chat-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+        .message {
+            margin-bottom: 15px;
+        }
+        .message .role {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .message.user .role {
+            color: #007bff;
+        }
+        .message.assistant .role {
+            color: #28a745;
+        }
+        .message .content {
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .input-area button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .input-area button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI 对话助手</h1>
+
+    <div class="chat-box" id="chatBox">
+        <div class="message assistant">
+            <div class="role">AI助手</div>
+            <div class="content">你好！我是AI助手，有什么可以帮助你的吗？</div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="questionInput" placeholder="请输入你的问题..." />
+        <button onclick="sendMessage()">发送</button>
+    </div>
+
+    <script>
+        // 默认用户ID，可根据数据库中实际存在的用户ID修改
+        const userId = 1;
+
+        function sendMessage() {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+
+            if (!question) {
+                return;
+            }
+
+            // 在聊天框显示用户消息
+            appendMessage('user', '你', question);
+            input.value = '';
+
+            // 调用后端 /ai/chat 接口
+            fetch('/ai/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    question: question
+                })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(result) {
+                if (result.code === 200) {
+                    appendMessage('assistant', 'AI助手', result.data);
+                } else {
+                    appendMessage('assistant', 'AI助手', '出错了：' + result.msg);
+                }
+            })
+            .catch(function(error) {
+                appendMessage('assistant', 'AI助手', '网络错误：' + error.message);
+            });
+        }
+
+        function appendMessage(role, roleName, content) {
+            const chatBox = document.getElementById('chatBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + role;
+
+            // 根据角色不同，设置不同的显示名称
+            const displayName = (role === 'user') ? '你' : 'AI助手';
+
+            msgDiv.innerHTML =
+                '<div class="role">' + displayName + '</div>' +
+                '<div class="content">' + content + '</div>';
+
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
