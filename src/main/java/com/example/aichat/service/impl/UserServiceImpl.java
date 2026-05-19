@@ -3,6 +3,7 @@ package com.example.aichat.service.impl;
 
 // 2. 导入所有需要的类，解决"无法解析符号"问题
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.aichat.mapper.UserMapper;
 import com.example.aichat.pojo.User;
 import com.example.aichat.service.UserService;
@@ -14,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 // 3. 类名必须和文件名 UserServiceImpl.java 完全一致
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     // 构造器注入（Spring推荐方式，无警告）
     private final UserMapper userMapper;
@@ -76,5 +77,10 @@ public class UserServiceImpl implements UserService {
     public Page<User> pageUser(Integer pageNum, Integer pageSize) {
         Page<User> page = new Page<>(pageNum, pageSize);
         return userMapper.selectPage(page, null);
+    }
+
+    @Override
+    public User getByUsername(String username) {
+        return lambdaQuery().eq(User::getUsername, username).one();
     }
 }

@@ -15,4 +15,5 @@ public interface UserService {
     Boolean deleteUser(Integer id);
     List<User> searchUser(String username);
     Page<User> pageUser(Integer pageNum, Integer pageSize);
+    User getByUsername(String username);
 }

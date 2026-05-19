@@ -1,148 +1,148 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 对话助手</title>
+    <title>个人AI助手</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 700px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .chat-box {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            min-height: 200px;
-            max-height: 400px;
-            overflow-y: auto;
-            background: #fafafa;
-        }
-        .message {
-            margin-bottom: 15px;
-        }
-        .message .role {
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .message.user .role {
-            color: #007bff;
-        }
-        .message.assistant .role {
-            color: #28a745;
-        }
-        .message .content {
-            background: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #eee;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .input-area {
-            display: flex;
-            gap: 10px;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .input-area button {
-            padding: 10px 20px;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .input-area button:hover {
-            background: #0056b3;
-        }
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat { border:1px solid #ccc; padding:10px; height:400px; overflow-y:auto; margin-bottom:10px; }
+        .user { color: blue; }
+        .ai { color: green; }
+        input[type="text"] { width: 80%; padding: 8px; }
+        button { padding: 8px 16px; }
+        .error { color: red; }
     </style>
 </head>
 <body>
-    <h1>AI 对话助手</h1>
+<h2>个人AI助手 (RAG)</h2>
+<div>
+    <input type="text" id="username" placeholder="用户名" value="me">
+    <input type="password" id="password" placeholder="密码" value="123">
+    <button onclick="login()">登录</button>
+    <button onclick="register()">注册</button>
+    <span id="loginStatus"></span>
+</div>
+<div id="chat"></div>
+<input type="text" id="question" placeholder="输入问题，例如：/rag 我的笔记里有什么？">
+<button onclick="send()">发送</button>
+<button onclick="stop()">停止</button>
 
-    <div class="chat-box" id="chatBox">
-        <div class="message assistant">
-            <div class="role">AI助手</div>
-            <div class="content">你好！我是AI助手，有什么可以帮助你的吗？</div>
-        </div>
-    </div>
+<script>
+    let token = '';
+    let eventSource = null;
 
-    <div class="input-area">
-        <input type="text" id="questionInput" placeholder="请输入你的问题..." />
-        <button onclick="sendMessage()">发送</button>
-    </div>
+    function append(msg, cls) {
+        const div = document.getElementById('chat');
+        const p = document.createElement('p');
+        p.className = cls;
+        p.textContent = msg;
+        div.appendChild(p);
+        div.scrollTop = div.scrollHeight;
+    }
 
-    <script>
-        // 默认用户ID，可根据数据库中实际存在的用户ID修改
-        const userId = 1;
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const res = await fetch('/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            token = data.data;
+            document.getElementById('loginStatus').textContent = '已登录';
+        } else {
+            alert('登录失败: ' + data.message);
+        }
+    }
 
-        function sendMessage() {
-            const input = document.getElementById('questionInput');
-            const question = input.value.trim();
+    async function register() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const res = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            alert('注册成功，请登录');
+        } else {
+            alert('注册失败: ' + data.message);
+        }
+    }
 
-            if (!question) {
-                return;
-            }
+    function send() {
+        const question = document.getElementById('question').value.trim();
+        if (!question) return;
+        if (!token) {
+            alert('请先登录');
+            return;
+        }
+        append('我: ' + question, 'user');
 
-            // 在聊天框显示用户消息
-            appendMessage('user', '你', question);
-            input.value = '';
-
-            // 调用后端 /ai/chat 接口
-            fetch('/ai/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    question: question
+        // 如果是 /rag 开头，使用 RAG 接口
+        if (question.startsWith('/rag')) {
+            fetch(`/ai/rag?question=${encodeURIComponent(question.substring(4))}`, {
+                headers: {'Authorization': 'Bearer ' + token}
+            })
+                .then(res => res.json())
+                .then(data => {
+                    append('AI: ' + (data.data || data.message), 'ai');
                 })
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(result) {
-                if (result.code === 200) {
-                    appendMessage('assistant', 'AI助手', result.data);
-                } else {
-                    appendMessage('assistant', 'AI助手', '出错了：' + result.msg);
+                .catch(err => append('错误: ' + err, 'error'));
+        } else {
+            // 流式对话
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource('/chat/stream?token=' + token + '&question=' + encodeURIComponent(question));
+            // 注意：EventSource 只支持 GET，需要调整后端以支持 GET 流式，或改用 fetch + SSE 解析。
+            // 简单起见，这里演示 fetch + ReadableStream 方式：
+            fetchSSE(question);
+        }
+        document.getElementById('question').value = '';
+    }
+
+    async function fetchSSE(question) {
+        const response = await fetch('/chat/stream', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({question})
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let aiMsg = '';
+        const aiP = document.createElement('p');
+        aiP.className = 'ai';
+        document.getElementById('chat').appendChild(aiP);
+
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            const text = decoder.decode(value, {stream: true});
+            // 简单处理 SSE 格式，可能包含 "data:" 前缀
+            const lines = text.split('\n');
+            for (let line of lines) {
+                if (line.startsWith('data:')) {
+                    const content = line.substring(5).trim();
+                    aiMsg += content;
+                    aiP.textContent = 'AI: ' + aiMsg;
+                    document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
                 }
-            })
-            .catch(function(error) {
-                appendMessage('assistant', 'AI助手', '网络错误：' + error.message);
-            });
+            }
         }
+    }
 
-        function appendMessage(role, roleName, content) {
-            const chatBox = document.getElementById('chatBox');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message ' + role;
-
-            // 根据角色不同，设置不同的显示名称
-            const displayName = (role === 'user') ? '你' : 'AI助手';
-
-            msgDiv.innerHTML =
-                '<div class="role">' + displayName + '</div>' +
-                '<div class="content">' + content + '</div>';
-
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+    function stop() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
         }
-    </script>
+    }
+</script>
 </body>
 </html>
