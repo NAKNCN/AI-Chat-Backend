@@ -29,6 +29,7 @@
 - **健康检查**：Spring Boot Actuator `/actuator/health`
 
 ## 快速启动
+docker-compose up -d
 
 ### 环境要求
 - JDK 17+
