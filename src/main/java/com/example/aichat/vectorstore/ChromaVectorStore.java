@@ -7,6 +7,8 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -19,6 +21,7 @@ public class ChromaVectorStore implements VectorStore {
     private final String collectionId;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final OkHttpClient okHttpClient = new OkHttpClient();
+    private static final Logger log = LoggerFactory.getLogger(ChromaVectorStore.class);
 
     public ChromaVectorStore(String baseUrl, EmbeddingModel embeddingModel, String collectionName) {
         this.chromaBaseUrl = baseUrl;
@@ -39,7 +42,7 @@ public class ChromaVectorStore implements VectorStore {
                 Map<String, Object> map = objectMapper.readValue(bodyStr, new TypeReference<>() {
                 });
                 String id = (String) map.get("id");
-                System.out.println("ℹ️ Chroma 集合已存在: " + collectionName + ", UUID: " + id);
+                log.info("Chroma 集合已存在: {}, UUID: {}", collectionName, id);
                 return id;
             }
         } catch (Exception ignored) {}
@@ -58,7 +61,7 @@ public class ChromaVectorStore implements VectorStore {
                 Map<String, Object> map = objectMapper.readValue(bodyStr, new TypeReference<>() {
                 });
                 String id = (String) map.get("id");
-                System.out.println("✅ Chroma 集合已创建: " + collectionName + ", UUID: " + id);
+                log.info("Chroma 集合已创建: {}, UUID: {}", collectionName, id);
                 return id;
             } else {
                 throw new RuntimeException("创建集合失败: " + resp.code());
@@ -130,7 +133,8 @@ public class ChromaVectorStore implements VectorStore {
         json.append("]}");
 
         String jsonStr = json.toString();
-        System.out.println("📤 OkHttp add 请求体 (前200字符): " + jsonStr.substring(0, Math.min(200, jsonStr.length())) + "...");
+        // 替换为调试日志
+        log.debug("OkHttp add 请求体 (前200字符): {}...", jsonStr.substring(0, Math.min(200, jsonStr.length())));
 
         RequestBody requestBody = RequestBody.create(jsonStr, MediaType.parse("application/json"));
         Request request = new Request.Builder()
@@ -224,12 +228,14 @@ public class ChromaVectorStore implements VectorStore {
                 .build();
         try (Response response = okHttpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                System.err.println("Chroma delete 警告: " + response.code());
+                // 替换为警告日志
+                log.warn("Chroma delete 返回非成功状态码: {}", response.code());
                 return Optional.of(false);
             }
             return Optional.of(true);
         } catch (IOException e) {
-            System.err.println("Chroma delete 网络异常: " + e.getMessage());
+            // 替换为错误日志
+            log.error("Chroma delete 网络异常", e);
             return Optional.of(false);
         }
     }

@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,8 @@ public class AIController {
     private final ChatHistoryService chatHistoryService;
 
     private static final int CONTEXT_LIMIT = 10;
+
+    private static final Logger log = LoggerFactory.getLogger(AIController.class);
 
     public AIController(ChatClient.Builder chatClientBuilder,
                         ChatHistoryService chatHistoryService) {

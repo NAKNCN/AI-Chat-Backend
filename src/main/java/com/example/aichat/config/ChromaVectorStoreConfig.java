@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ public class ChromaVectorStoreConfig {
     public VectorStore vectorStore(EmbeddingModel embeddingModel) {
         return new ChromaVectorStore(chromaBaseUrl, embeddingModel, collectionName);
     }
+
+    private static final Logger log = LoggerFactory.getLogger(ChromaVectorStoreConfig.class);
 
     @Bean
     ApplicationRunner loadKnowledgeBase(VectorStore vectorStore) {
@@ -58,10 +62,10 @@ public class ChromaVectorStoreConfig {
 
                 if (!docs.isEmpty()) {
                     vectorStore.add(docs);
-                    System.out.println("✅ Chroma 知识库已加载，共 " + docs.size() + " 个文档段");
+                    log.info("Chroma 知识库已加载，共 {} 个文档段", docs.size());
                 }
             } catch (Exception e) {
-                System.err.println("❌ Chroma 知识库加载失败（应用将继续启动）: " + e.getMessage());
+                log.error("Chroma 知识库加载失败，应用将继续启动", e);
                 // 加载失败时，知识库为空，但不会阻止启动
             }
         };

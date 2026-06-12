@@ -33,7 +33,16 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 登录注册和静态页面放行
-                        .requestMatchers("/auth/login", "/auth/register", "/index.html").permitAll()
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/register",
+                                "/index.html",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/health",   // 新增
+                                "/actuator/info"      // 新增
+                        ).permitAll()
                         // 流式接口暂时放行（测试用，正式环境可改为 authenticated()）
                         .requestMatchers("/chat/stream").permitAll()
                         // 其他接口需要认证
