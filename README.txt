@@ -1,11 +1,39 @@
-项目简介：基于 Spring Boot 3.x 构建的 AI 对话助手后端服务。
-技术栈：Spring Boot 3.2.5、MyBatis-Plus 3.5.10、MySQL 8.x、OkHttp、Jackson。
-功能列表：
-用户管理：增删改查、条件查询、分页查询。
-AI 对话：调用通义千问 API，实现智能问答。
-对话历史：自动保存问答记录，支持后续查询。
-全局异常处理：统一返回 JSON 格式错误信息。
-异步保存：使用 @Async 优化接口响应速度。
-项目结构说明：简要描述各包（controller、service、mapper、pojo、config、exception）的职责。
-如何运行：列出启动项目所需的步骤（配置数据库、修改 API Key、启动应用）。
-接口列表：列出主要接口的 URL、方法和功能说明。
+# AI 对话助手后端系统 (aichat)
+
+基于 Spring AI + Chroma 的 RAG 知识库问答系统，支持多轮对话、流式输出、知识库管理和 Docker 一键部署。
+
+## 技术栈
+
+| 分层 | 技术 |
+|------|------|
+| 基础框架 | Spring Boot 3.2.5 |
+| ORM | MyBatis-Plus 3.5.10 |
+| 认证授权 | Spring Security + JWT |
+| AI 对话 | Spring AI Alibaba（通义千问） |
+| 向量数据库 | Chroma 0.5.5 |
+| HTTP 客户端 | OkHttp 4.12 |
+| 流式输出 | Spring WebFlux + SSE |
+| 数据库 | MySQL 8.0 |
+| 接口文档 | SpringDoc OpenAPI (Swagger) |
+| 部署 | Docker + Docker Compose |
+| CI/CD | GitHub Actions |
+
+## 核心功能
+
+- **多轮对话**：携带最近 10 轮历史上下文
+- **RAG 知识库问答**：基于 Chroma 向量检索，回答有据可依
+- **SSE 流式输出**：打字机效果，提升体验
+- **知识库管理**：在线增删查文档，支持 Markdown 上传
+- **用户认证**：Spring Security + JWT 无状态认证
+- **全局异常处理**：统一 JSON 错误返回
+- **健康检查**：Spring Boot Actuator `/actuator/health`
+
+## 快速启动
+
+### 环境要求
+- JDK 17+
+- Docker Desktop
+
+### 1. 打包项目
+```bash
+mvn clean package -DskipTests
